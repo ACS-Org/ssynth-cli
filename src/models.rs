@@ -71,7 +71,8 @@ pub struct Target {
     pub package: Option<String>,
     pub board: Option<String>,
     pub toolchain_lane: String,
-    pub created_at: DateTime<Utc>,
+    #[serde(default)]
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 // ── Job ──
@@ -295,7 +296,9 @@ pub struct UsageSummary {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreditTransaction {
     pub id: Uuid,
+    pub tx_type: String,
     pub amount_cents: i64,
+    pub balance_after_cents: i64,
     pub description: String,
     pub created_at: DateTime<Utc>,
 }
