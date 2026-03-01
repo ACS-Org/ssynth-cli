@@ -270,9 +270,8 @@ pub struct CreateApiKeyResponse {
     pub id: Uuid,
     pub name: String,
     pub prefix: String,
-    pub plain_key: String,
+    pub key: String,
     pub expires_at: Option<DateTime<Utc>>,
-    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -280,9 +279,8 @@ pub struct ApiKey {
     pub id: Uuid,
     pub name: String,
     pub prefix: String,
+    pub is_revoked: bool,
     pub expires_at: Option<DateTime<Utc>>,
-    pub revoked_at: Option<DateTime<Utc>>,
-    pub last_used_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
 }
 
