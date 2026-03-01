@@ -1,8 +1,9 @@
 use anyhow::{bail, Context, Result};
+use colored::Colorize;
 
-use crate::cli::{ProjectCreateArgs, ProjectListArgs};
+use crate::cli::{ProjectCreateArgs, ProjectDeleteArgs, ProjectGetArgs, ProjectListArgs, ProjectUpdateArgs};
 use crate::client::{check_response, ApiClient};
-use crate::models::{CreateProjectRequest, Project};
+use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use crate::output::{format_time, new_table, print_list, print_output, short_uuid, OutputMode};
 
 pub async fn list(
@@ -74,7 +75,13 @@ pub async fn create(
     let resp = check_response(resp).await?;
     let project: Project = resp.json().await.context("Failed to parse project")?;
 
-    print_output(mode, &project, |p| {
+    print_project(mode, &project);
+
+    Ok(())
+}
+
+fn print_project(mode: OutputMode, project: &Project) {
+    print_output(mode, project, |p| {
         let mut table = new_table();
         table.set_header(["FIELD", "VALUE"]);
         table.add_row(["ID", &p.id.to_string()]);
@@ -85,9 +92,74 @@ pub async fn create(
             &p.default_target_id
                 .map_or("-".to_string(), |t| t.to_string()),
         ]);
+        table.add_row(["Retention", &format!("{} days", p.retention_days)]);
         table.add_row(["Created", &format_time(&p.created_at)]);
         table
     });
+}
+
+pub async fn get(
+    args: &ProjectGetArgs,
+    client: &ApiClient,
+    mode: OutputMode,
+) -> Result<()> {
+    let resp = client
+        .get(&format!("/v1/projects/{}", args.id))
+        .send()
+        .await
+        .context("Failed to fetch project")?;
+    let resp = check_response(resp).await?;
+    let project: Project = resp.json().await.context("Failed to parse project")?;
+
+    print_project(mode, &project);
+
+    Ok(())
+}
+
+pub async fn update(
+    args: &ProjectUpdateArgs,
+    client: &ApiClient,
+    mode: OutputMode,
+) -> Result<()> {
+    let req = UpdateProjectRequest {
+        display_name: args.name.clone(),
+        retention_days: args.retention_days,
+    };
+
+    let resp = client
+        .patch(&format!("/v1/projects/{}", args.id))
+        .json(&req)
+        .send()
+        .await
+        .context("Failed to update project")?;
+    let resp = check_response(resp).await?;
+    let project: Project = resp.json().await.context("Failed to parse project")?;
+
+    print_project(mode, &project);
+
+    Ok(())
+}
+
+pub async fn delete(
+    args: &ProjectDeleteArgs,
+    client: &ApiClient,
+    mode: OutputMode,
+) -> Result<()> {
+    let resp = client
+        .delete(&format!("/v1/projects/{}", args.id))
+        .send()
+        .await
+        .context("Failed to delete project")?;
+    let _resp = check_response(resp).await?;
+
+    match mode {
+        OutputMode::Json => {
+            println!(r#"{{"deleted": true, "id": "{}"}}"#, args.id);
+        }
+        OutputMode::Human => {
+            eprintln!("{} Project {} deleted.", "OK".green().bold(), args.id);
+        }
+    }
 
     Ok(())
 }

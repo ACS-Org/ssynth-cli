@@ -46,6 +46,16 @@ impl ApiClient {
         self.apply_auth(req)
     }
 
+    pub fn patch(&self, path: &str) -> RequestBuilder {
+        let req = self.http.patch(self.url(path));
+        self.apply_auth(req)
+    }
+
+    pub fn delete(&self, path: &str) -> RequestBuilder {
+        let req = self.http.delete(self.url(path));
+        self.apply_auth(req)
+    }
+
     pub fn base_url(&self) -> &str {
         &self.base_url
     }

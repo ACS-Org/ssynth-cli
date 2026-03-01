@@ -23,6 +23,9 @@ pub async fn run(args: &JobStatusArgs, client: &ApiClient, mode: OutputMode) -> 
             table.add_row(["Seeds", &j.search_seeds.to_string()]);
             table.add_row(["Pick", &j.search_pick]);
             table.add_row(["Priority", &j.compute_priority]);
+            if let Some(ref parent) = j.parent_job_id {
+                table.add_row(["Parent Job", &parent.to_string()]);
+            }
             table.add_row(["Created", &format_time(&j.created_at)]);
             table.add_row(["Updated", &format_time(&j.updated_at)]);
             table
@@ -31,7 +34,10 @@ pub async fn run(args: &JobStatusArgs, client: &ApiClient, mode: OutputMode) -> 
         if mode == OutputMode::Human && !job.runs.is_empty() {
             eprintln!();
             let mut run_table = new_table();
-            run_table.set_header(["RUN", "SEED", "STATUS", "TIMING", "LUTs", "FFs", "WINNER"]);
+            run_table.set_header([
+                "RUN", "SEED", "STATUS", "TIMING", "LUTs", "FFs", "BRAMs", "CRIT PATH",
+                "WINNER",
+            ]);
             for r in &job.runs {
                 run_table.add_row([
                     short_uuid(&r.id),
@@ -41,6 +47,9 @@ pub async fn run(args: &JobStatusArgs, client: &ApiClient, mode: OutputMode) -> 
                         .map_or("-".to_string(), |v| format!("{v:.1} MHz")),
                     r.area_luts.map_or("-".to_string(), |v| v.to_string()),
                     r.area_ffs.map_or("-".to_string(), |v| v.to_string()),
+                    r.area_brams.map_or("-".to_string(), |v| v.to_string()),
+                    r.critical_path_ns
+                        .map_or("-".to_string(), |v| format!("{v:.2} ns")),
                     if r.is_winner {
                         "yes".to_string()
                     } else {
@@ -54,6 +63,8 @@ pub async fn run(args: &JobStatusArgs, client: &ApiClient, mode: OutputMode) -> 
                         format!("  {}", s.step_name),
                         String::new(),
                         s.status.clone(),
+                        String::new(),
+                        String::new(),
                         String::new(),
                         String::new(),
                         format_duration_secs(s.duration_secs),

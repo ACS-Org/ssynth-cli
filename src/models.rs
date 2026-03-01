@@ -117,6 +117,7 @@ pub struct Job {
     pub requested_steps: Vec<String>,
     pub status: String,
     pub idempotency_key: Option<String>,
+    pub parent_job_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -138,6 +139,7 @@ pub struct JobDetailResponse {
     pub requested_steps: Vec<String>,
     pub status: String,
     pub idempotency_key: Option<String>,
+    pub parent_job_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     #[serde(default)]
@@ -154,6 +156,8 @@ pub struct RunWithSteps {
     pub timing_mhz: Option<f64>,
     pub area_luts: Option<i64>,
     pub area_ffs: Option<i64>,
+    pub area_brams: Option<i64>,
+    pub critical_path_ns: Option<f64>,
     pub is_winner: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -218,6 +222,94 @@ pub enum WsMessage {
     },
     #[serde(rename = "status")]
     Status { status: String },
+}
+
+// ── Paginated Response ──
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PageResponse<T> {
+    pub data: Vec<T>,
+    pub has_more: bool,
+    pub next_cursor: Option<String>,
+}
+
+// ── Retry / Clone ──
+
+#[derive(Debug, Serialize)]
+pub struct RetryJobRequest {
+    pub scope: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CloneJobRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub search_seeds: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub search_pick: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub compute_parallelism: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub compute_priority: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extra_args: Option<serde_json::Value>,
+}
+
+// ── API Keys ──
+
+#[derive(Debug, Serialize)]
+pub struct CreateApiKeyRequest {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expires_at: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateApiKeyResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub prefix: String,
+    pub plain_key: String,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApiKey {
+    pub id: Uuid,
+    pub name: String,
+    pub prefix: String,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub revoked_at: Option<DateTime<Utc>>,
+    pub last_used_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+// ── Usage / Credits ──
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UsageSummary {
+    pub balance_cents: i64,
+    pub recent_transactions: Vec<CreditTransaction>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreditTransaction {
+    pub id: Uuid,
+    pub amount_cents: i64,
+    pub description: String,
+    pub created_at: DateTime<Utc>,
+}
+
+// ── Project Update ──
+
+#[derive(Debug, Serialize)]
+pub struct UpdateProjectRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retention_days: Option<i32>,
 }
 
 // ── API Error ──

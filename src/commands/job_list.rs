@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 
 use crate::cli::JobListArgs;
 use crate::client::{check_response, ApiClient};
-use crate::models::Job;
+use crate::models::{Job, PageResponse};
 use crate::output::{format_time, print_list, short_uuid, OutputMode};
 
 pub async fn run(
@@ -35,11 +35,11 @@ pub async fn run(
         .await
         .context("Failed to list jobs")?;
     let resp = check_response(resp).await?;
-    let jobs: Vec<Job> = resp.json().await.context("Failed to parse jobs")?;
+    let page: PageResponse<Job> = resp.json().await.context("Failed to parse jobs")?;
 
     print_list(
         mode,
-        &jobs,
+        &page.data,
         &["ID", "STATUS", "MODULE", "SEEDS", "PRIORITY", "CREATED"],
         |j| {
             vec![
@@ -52,6 +52,12 @@ pub async fn run(
             ]
         },
     );
+
+    if page.has_more {
+        if let Some(ref cursor) = page.next_cursor {
+            eprintln!("\nMore results available. Use --after={cursor} to see next page.");
+        }
+    }
 
     Ok(())
 }

@@ -1,9 +1,14 @@
+pub mod api_key;
 pub mod artifact;
 pub mod config_show;
 pub mod job_cancel;
+pub mod job_clone;
 pub mod job_list;
 pub mod job_logs;
+pub mod job_retry;
 pub mod job_status;
 pub mod job_submit;
 pub mod login;
 pub mod project;
+pub mod targets;
+pub mod usage;

@@ -36,6 +36,16 @@ pub enum Command {
     #[command(subcommand)]
     Project(ProjectCommand),
 
+    /// Manage API keys
+    #[command(subcommand, name = "api-key")]
+    ApiKey(ApiKeyCommand),
+
+    /// Show credit balance and usage
+    Usage,
+
+    /// List available FPGA targets
+    Targets,
+
     /// Show current configuration
     Config(ConfigArgs),
 }
@@ -71,6 +81,10 @@ pub enum JobCommand {
     Logs(JobLogsArgs),
     /// Cancel a running job
     Cancel(JobCancelArgs),
+    /// Retry failed (or all) seeds of a completed/failed job
+    Retry(JobRetryArgs),
+    /// Clone a job with optional parameter overrides
+    Clone(JobCloneArgs),
 }
 
 #[derive(Parser)]
@@ -172,6 +186,42 @@ pub struct JobCancelArgs {
     pub job_id: String,
 }
 
+#[derive(Parser)]
+pub struct JobRetryArgs {
+    /// Job ID
+    pub job_id: String,
+
+    /// Retry scope: "failed" (default) or "all"
+    #[arg(long, default_value = "failed")]
+    pub scope: String,
+}
+
+#[derive(Parser)]
+pub struct JobCloneArgs {
+    /// Job ID to clone from
+    pub job_id: String,
+
+    /// Number of seeds (inherits from parent if not set)
+    #[arg(long)]
+    pub seeds: Option<i32>,
+
+    /// Parallelism level
+    #[arg(long)]
+    pub parallelism: Option<i32>,
+
+    /// Compute priority: interactive, standard, or batch
+    #[arg(long)]
+    pub priority: Option<String>,
+
+    /// Seed selection strategy: `best_timing` or `best_area`
+    #[arg(long)]
+    pub pick: Option<String>,
+
+    /// Target ID
+    #[arg(long)]
+    pub target: Option<String>,
+}
+
 // ── Artifact ──
 
 #[derive(Subcommand)]
@@ -210,6 +260,12 @@ pub enum ProjectCommand {
     List(ProjectListArgs),
     /// Create a new project
     Create(ProjectCreateArgs),
+    /// Get project details
+    Get(ProjectGetArgs),
+    /// Update a project
+    Update(ProjectUpdateArgs),
+    /// Delete a project
+    Delete(ProjectDeleteArgs),
 }
 
 #[derive(Parser)]
@@ -228,6 +284,61 @@ pub struct ProjectCreateArgs {
     /// Default target ID
     #[arg(long)]
     pub target: Option<String>,
+}
+
+#[derive(Parser)]
+pub struct ProjectGetArgs {
+    /// Project ID
+    pub id: String,
+}
+
+#[derive(Parser)]
+pub struct ProjectUpdateArgs {
+    /// Project ID
+    pub id: String,
+
+    /// New display name
+    #[arg(long)]
+    pub name: Option<String>,
+
+    /// Retention days
+    #[arg(long)]
+    pub retention_days: Option<i32>,
+}
+
+#[derive(Parser)]
+pub struct ProjectDeleteArgs {
+    /// Project ID
+    pub id: String,
+}
+
+// ── API Key ──
+
+#[derive(Subcommand)]
+pub enum ApiKeyCommand {
+    /// Create a new API key
+    Create(ApiKeyCreateArgs),
+    /// List API keys
+    List,
+    /// Revoke an API key
+    Revoke(ApiKeyRevokeArgs),
+}
+
+#[derive(Parser)]
+pub struct ApiKeyCreateArgs {
+    /// Key name
+    #[arg(long)]
+    pub name: String,
+
+    /// Expiration date (ISO 8601, e.g. 2025-12-31)
+    #[arg(long)]
+    pub expires_at: Option<String>,
+}
+
+#[derive(Parser)]
+pub struct ApiKeyRevokeArgs {
+    /// API key ID
+    pub id: String,
 }
 
 // ── Config ──
