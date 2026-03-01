@@ -18,12 +18,19 @@ pub async fn run(
     _tenant_id: &str,
     mode: OutputMode,
 ) -> Result<()> {
-    let dir = PathBuf::from(&args.path);
-    if !dir.is_dir() {
-        return Err(CliError::FileNotFound(dir).into());
-    }
+    let path = PathBuf::from(&args.path);
 
-    let hwbuild = HwBuild::load(&dir)?;
+    // Determine hwbuild context: only look for it in directories
+    let hwbuild_dir = if path.is_dir() {
+        Some(path.clone())
+    } else {
+        path.parent().map(std::path::Path::to_path_buf)
+    };
+    let hwbuild = hwbuild_dir
+        .as_deref()
+        .and_then(|d| HwBuild::load(d).ok())
+        .flatten();
+
     let target_id = resolve_target(args, hwbuild.as_ref(), client).await?;
     let top_module = args
         .top
@@ -36,21 +43,46 @@ pub async fn run(
         .as_deref()
         .context("--project is required (no default set)")?;
 
-    let source_key = upload_source(&dir, client).await?;
+    let source_key = upload_source(&path, client).await?;
     let req = build_job_request(args, hwbuild.as_ref(), target_id, top_module, source_key);
     let job = submit_job(client, project_id, &req).await?;
     print_job_result(mode, &job, args.wait, client).await
 }
 
-async fn upload_source(dir: &std::path::Path, client: &ApiClient) -> Result<String> {
-    eprintln!("{}", "Packaging source files...".dimmed());
-    let ignore = build_ignore(dir);
-    let tarball = create_tarball(dir, &ignore)?;
-    let size_kb = tarball.len() / 1024;
-    eprintln!("  Archive size: {size_kb} KB");
+/// Detect content type from a file extension.
+fn content_type_for_file(path: &std::path::Path) -> Result<&'static str> {
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    match ext.to_ascii_lowercase().as_str() {
+        // .tar.gz files have extension "gz"; check the stem also ends with .tar
+        "gz" | "tgz" => Ok("application/gzip"),
+        "zip" => Ok("application/zip"),
+        _ => bail!("unsupported file format: expected .tar.gz, .tgz, or .zip"),
+    }
+}
+
+async fn upload_source(path: &std::path::Path, client: &ApiClient) -> Result<String> {
+    let (data, content_type) = if path.is_dir() {
+        // Directory: bundle as .tar.gz
+        eprintln!("{}", "Packaging source files...".dimmed());
+        let ignore = build_ignore(path);
+        let tarball = create_tarball(path, &ignore)?;
+        let size_kb = tarball.len() / 1024;
+        eprintln!("  Archive size: {size_kb} KB");
+        (tarball, "application/gzip")
+    } else if path.is_file() {
+        // File: read and detect format from extension
+        let ct = content_type_for_file(path)?;
+        let data = std::fs::read(path)
+            .with_context(|| format!("failed to read file: {}", path.display()))?;
+        let size_kb = data.len() / 1024;
+        eprintln!("  Bundle size: {size_kb} KB");
+        (data, ct)
+    } else {
+        return Err(CliError::FileNotFound(path.to_path_buf()).into());
+    };
 
     eprintln!("{}", "Uploading source...".dimmed());
-    let resp = do_upload(client, tarball).await?;
+    let resp = do_upload(client, data, content_type).await?;
     eprintln!("{}", "Upload complete.".green());
     Ok(resp.source_key)
 }

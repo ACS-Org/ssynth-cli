@@ -75,7 +75,7 @@ pub enum JobCommand {
 
 #[derive(Parser)]
 pub struct JobSubmitArgs {
-    /// Path to the source directory
+    /// Path to source directory or prepared bundle (.tar.gz / .zip)
     pub path: String,
 
     /// Project ID

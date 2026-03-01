@@ -56,8 +56,14 @@ fn add_dir_to_tar<W: Write>(
     Ok(())
 }
 
-/// Upload a tarball to the API, which stores it in S3. Returns the `source_key`.
-pub async fn upload_source(client: &ApiClient, data: Vec<u8>) -> Result<UploadResponse> {
+/// Upload archive data to the API, which stores it in S3. Returns the `source_key`.
+///
+/// `content_type` should be `"application/gzip"` for `.tar.gz` or `"application/zip"` for `.zip`.
+pub async fn upload_source(
+    client: &ApiClient,
+    data: Vec<u8>,
+    content_type: &str,
+) -> Result<UploadResponse> {
     let size = data.len();
     let pb = ProgressBar::new(size as u64);
     pb.set_style(
@@ -69,7 +75,7 @@ pub async fn upload_source(client: &ApiClient, data: Vec<u8>) -> Result<UploadRe
 
     let resp = client
         .post("/v1/jobs/upload")
-        .header("content-type", "application/gzip")
+        .header("content-type", content_type)
         .body(data)
         .send()
         .await
