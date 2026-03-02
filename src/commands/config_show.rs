@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use crate::config::Config;
 use crate::output::{new_table, print_output, OutputMode};
 

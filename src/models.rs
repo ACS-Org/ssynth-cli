@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -100,6 +103,10 @@ pub struct CreateJobRequest {
     pub requested_steps: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub idempotency_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_runtime_secs: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_memory_mb: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -118,6 +125,8 @@ pub struct Job {
     pub requested_steps: Vec<String>,
     pub status: String,
     pub idempotency_key: Option<String>,
+    pub max_runtime_secs: Option<i32>,
+    pub max_memory_mb: Option<i32>,
     pub parent_job_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -140,6 +149,8 @@ pub struct JobDetailResponse {
     pub requested_steps: Vec<String>,
     pub status: String,
     pub idempotency_key: Option<String>,
+    pub max_runtime_secs: Option<i32>,
+    pub max_memory_mb: Option<i32>,
     pub parent_job_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -160,6 +171,8 @@ pub struct RunWithSteps {
     pub area_brams: Option<i64>,
     pub critical_path_ns: Option<f64>,
     pub is_winner: bool,
+    pub started_at: Option<DateTime<Utc>>,
+    pub termination_reason: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     #[serde(default)]

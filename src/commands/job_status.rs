@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use anyhow::{Context, Result};
 
 use crate::cli::JobStatusArgs;
@@ -23,6 +26,12 @@ pub async fn run(args: &JobStatusArgs, client: &ApiClient, mode: OutputMode) -> 
             table.add_row(["Seeds", &j.search_seeds.to_string()]);
             table.add_row(["Pick", &j.search_pick]);
             table.add_row(["Priority", &j.compute_priority]);
+            if let Some(rt) = j.max_runtime_secs {
+                table.add_row(["Max Runtime", &format_runtime(rt)]);
+            }
+            if let Some(mem) = j.max_memory_mb {
+                table.add_row(["Max Memory", &format_memory(mem)]);
+            }
             if let Some(ref parent) = j.parent_job_id {
                 table.add_row(["Parent Job", &parent.to_string()]);
             }
@@ -35,14 +44,26 @@ pub async fn run(args: &JobStatusArgs, client: &ApiClient, mode: OutputMode) -> 
             eprintln!();
             let mut run_table = new_table();
             run_table.set_header([
-                "RUN", "SEED", "STATUS", "TIMING", "LUTs", "FFs", "BRAMs", "CRIT PATH",
+                "RUN",
+                "SEED",
+                "STATUS",
+                "TIMING",
+                "LUTs",
+                "FFs",
+                "BRAMs",
+                "CRIT PATH",
                 "WINNER",
             ]);
             for r in &job.runs {
+                let status_display = if let Some(ref reason) = r.termination_reason {
+                    format!("{} ({})", r.status, reason)
+                } else {
+                    r.status.clone()
+                };
                 run_table.add_row([
                     short_uuid(&r.id),
                     r.seed.to_string(),
-                    r.status.clone(),
+                    status_display,
                     r.timing_mhz
                         .map_or("-".to_string(), |v| format!("{v:.1} MHz")),
                     r.area_luts.map_or("-".to_string(), |v| v.to_string()),
@@ -99,5 +120,26 @@ pub async fn fetch_job_detail(job_id: &str, client: &ApiClient) -> Result<JobDet
 }
 
 fn is_terminal_status(status: &str) -> bool {
-    matches!(status, "completed" | "failed" | "cancelled")
+    matches!(
+        status,
+        "completed" | "failed" | "cancelled" | "canceled" | "terminated"
+    )
+}
+
+fn format_runtime(secs: i32) -> String {
+    let hours = secs / 3600;
+    let mins = (secs % 3600) / 60;
+    if mins > 0 {
+        format!("{hours}h{mins}m")
+    } else {
+        format!("{hours}h")
+    }
+}
+
+fn format_memory(mb: i32) -> String {
+    if mb >= 1024 && mb % 1024 == 0 {
+        format!("{} GB", mb / 1024)
+    } else {
+        format!("{mb} MB")
+    }
 }

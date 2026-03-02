@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -26,7 +29,7 @@ pub enum Command {
 
     /// Manage synthesis jobs
     #[command(subcommand)]
-    Job(JobCommand),
+    Job(Box<JobCommand>),
 
     /// Manage build artifacts
     #[command(subcommand)]
@@ -127,6 +130,14 @@ pub struct JobSubmitArgs {
     /// Pipeline steps (e.g. synth,pnr,bitstream)
     #[arg(long, value_delimiter = ',')]
     pub steps: Option<Vec<String>>,
+
+    /// Max runtime (e.g., "2h", "30m", "1h30m", "86400s")
+    #[arg(long)]
+    pub max_runtime: Option<String>,
+
+    /// Max memory (e.g., "16GB", "4096MB")
+    #[arg(long)]
+    pub max_memory: Option<String>,
 
     /// Wait for job to complete, streaming logs
     #[arg(long)]

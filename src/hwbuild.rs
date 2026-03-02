@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use std::path::Path;
 
 use anyhow::{Context, Result};
@@ -16,6 +19,8 @@ pub struct HwBuild {
     pub priority: Option<String>,
     pub parallelism: Option<i32>,
     pub steps: Option<Vec<String>>,
+    pub max_runtime: Option<String>,
+    pub max_memory: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

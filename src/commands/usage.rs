@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use anyhow::{Context, Result};
 
 use crate::client::{check_response, ApiClient};
@@ -15,8 +18,7 @@ pub async fn run(client: &ApiClient, tenant_id: &str, mode: OutputMode) -> Resul
 
     match mode {
         OutputMode::Json => {
-            let json =
-                serde_json::to_string_pretty(&usage).expect("JSON serialization failed");
+            let json = serde_json::to_string_pretty(&usage).expect("JSON serialization failed");
             println!("{json}");
         }
         OutputMode::Human => {

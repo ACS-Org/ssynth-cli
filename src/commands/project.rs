@@ -1,7 +1,12 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use anyhow::{bail, Context, Result};
 use colored::Colorize;
 
-use crate::cli::{ProjectCreateArgs, ProjectDeleteArgs, ProjectGetArgs, ProjectListArgs, ProjectUpdateArgs};
+use crate::cli::{
+    ProjectCreateArgs, ProjectDeleteArgs, ProjectGetArgs, ProjectListArgs, ProjectUpdateArgs,
+};
 use crate::client::{check_response, ApiClient};
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
 use crate::output::{format_time, new_table, print_list, print_output, short_uuid, OutputMode};
@@ -98,11 +103,7 @@ fn print_project(mode: OutputMode, project: &Project) {
     });
 }
 
-pub async fn get(
-    args: &ProjectGetArgs,
-    client: &ApiClient,
-    mode: OutputMode,
-) -> Result<()> {
+pub async fn get(args: &ProjectGetArgs, client: &ApiClient, mode: OutputMode) -> Result<()> {
     let resp = client
         .get(&format!("/v1/projects/{}", args.id))
         .send()
@@ -116,11 +117,7 @@ pub async fn get(
     Ok(())
 }
 
-pub async fn update(
-    args: &ProjectUpdateArgs,
-    client: &ApiClient,
-    mode: OutputMode,
-) -> Result<()> {
+pub async fn update(args: &ProjectUpdateArgs, client: &ApiClient, mode: OutputMode) -> Result<()> {
     let req = UpdateProjectRequest {
         display_name: args.name.clone(),
         retention_days: args.retention_days,
@@ -140,11 +137,7 @@ pub async fn update(
     Ok(())
 }
 
-pub async fn delete(
-    args: &ProjectDeleteArgs,
-    client: &ApiClient,
-    mode: OutputMode,
-) -> Result<()> {
+pub async fn delete(args: &ProjectDeleteArgs, client: &ApiClient, mode: OutputMode) -> Result<()> {
     let resp = client
         .delete(&format!("/v1/projects/{}", args.id))
         .send()

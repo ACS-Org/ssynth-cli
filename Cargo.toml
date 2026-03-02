@@ -3,6 +3,7 @@ name = "ssynth"
 version = "0.1.0"
 edition = "2021"
 description = "CLI for SuperSynth FPGA synthesis platform"
+license = "GPL-3.0-only"
 
 [lints.rust]
 unsafe_code = "deny"

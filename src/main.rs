@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 mod cli;
 mod client;
 mod commands;
@@ -7,6 +10,7 @@ mod hwbuild;
 mod ignore;
 mod models;
 mod output;
+mod parse;
 mod upload;
 
 use std::process;
@@ -15,9 +19,7 @@ use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
 
-use cli::{
-    ApiKeyCommand, ArtifactCommand, Cli, Command, ConfigAction, JobCommand, ProjectCommand,
-};
+use cli::{ApiKeyCommand, ArtifactCommand, Cli, Command, ConfigAction, JobCommand, ProjectCommand};
 use client::ApiClient;
 use config::Config;
 use error::CliError;

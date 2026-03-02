@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 pub mod api_key;
 pub mod artifact;
 pub mod config_show;

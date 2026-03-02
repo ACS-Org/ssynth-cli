@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use std::path::PathBuf;
 
 use anyhow::{bail, Context, Result};
@@ -10,6 +13,7 @@ use crate::hwbuild::HwBuild;
 use crate::ignore::build_ignore;
 use crate::models::{CreateJobRequest, JobDetailResponse, Target};
 use crate::output::{format_time, new_table, print_output, OutputMode};
+use crate::parse;
 use crate::upload::{create_tarball, upload_source as do_upload};
 
 pub async fn run(
@@ -44,7 +48,7 @@ pub async fn run(
         .context("--project is required (no default set)")?;
 
     let source_key = upload_source(&path, client).await?;
-    let req = build_job_request(args, hwbuild.as_ref(), target_id, top_module, source_key);
+    let req = build_job_request(args, hwbuild.as_ref(), target_id, top_module, source_key)?;
     let job = submit_job(client, project_id, &req).await?;
     print_job_result(mode, &job, args.wait, client).await
 }
@@ -93,7 +97,7 @@ fn build_job_request(
     target_id: uuid::Uuid,
     top_module: String,
     source_key: String,
-) -> CreateJobRequest {
+) -> Result<CreateJobRequest> {
     let constraint_files = args
         .constraints
         .clone()
@@ -103,7 +107,27 @@ fn build_job_request(
         .clone()
         .or_else(|| hwbuild.and_then(|h| h.steps.clone()));
 
-    CreateJobRequest {
+    // Resolve max_runtime: CLI arg → hwbuild → None (server applies defaults)
+    let max_runtime_str = args
+        .max_runtime
+        .as_deref()
+        .or(hwbuild.and_then(|h| h.max_runtime.as_deref()));
+    let max_runtime_secs = max_runtime_str
+        .map(parse::parse_duration)
+        .transpose()
+        .context("invalid --max-runtime value")?;
+
+    // Resolve max_memory: CLI arg → hwbuild → None (server applies defaults)
+    let max_memory_str = args
+        .max_memory
+        .as_deref()
+        .or(hwbuild.and_then(|h| h.max_memory.as_deref()));
+    let max_memory_mb = max_memory_str
+        .map(parse::parse_memory)
+        .transpose()
+        .context("invalid --max-memory value")?;
+
+    Ok(CreateJobRequest {
         target_id,
         source_type: "upload".to_string(),
         source_upload_key: Some(source_key),
@@ -122,7 +146,9 @@ fn build_job_request(
             .or_else(|| hwbuild.and_then(|h| h.priority.clone())),
         requested_steps: steps,
         idempotency_key: args.idempotency_key.clone(),
-    }
+        max_runtime_secs,
+        max_memory_mb,
+    })
 }
 
 async fn submit_job(

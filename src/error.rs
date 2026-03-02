@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]

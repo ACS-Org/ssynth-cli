@@ -1,3 +1,6 @@
+// Copyright 2026 Hemi Labs, Inc.
+// SPDX-License-Identifier: GPL-3.0-only
+
 use anyhow::{Context, Result};
 use colored::Colorize;
 
@@ -50,11 +53,7 @@ pub async fn create(
     Ok(())
 }
 
-pub async fn list(
-    client: &ApiClient,
-    _tenant_id: &str,
-    mode: OutputMode,
-) -> Result<()> {
+pub async fn list(client: &ApiClient, _tenant_id: &str, mode: OutputMode) -> Result<()> {
     let resp = client
         .get("/v1/api-keys")
         .send()
@@ -73,7 +72,11 @@ pub async fn list(
                 k.name.clone(),
                 k.prefix.clone(),
                 k.expires_at.as_ref().map_or("-".into(), format_time),
-                if k.is_revoked { "revoked".into() } else { "active".into() },
+                if k.is_revoked {
+                    "revoked".into()
+                } else {
+                    "active".into()
+                },
                 format_time(&k.created_at),
             ]
         },
