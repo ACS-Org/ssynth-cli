@@ -44,11 +44,7 @@ pub async fn run(
         .or(hwbuild.as_ref().and_then(|h| h.top_module.as_deref()))
         .unwrap_or("top")
         .to_string();
-    let project_id = args
-        .project
-        .as_deref()
-        .or(config.defaults.project_id.as_deref())
-        .context("--project is required (set via flag, SSYNTH_PROJECT env, or defaults.project_id in config)")?;
+    let project_id = resolve_project_id(args.project.as_deref(), config)?;
 
     let source_key = upload_source(&path, client).await?;
     let req = build_job_request(args, hwbuild.as_ref(), target_id, top_module, source_key)?;
@@ -215,6 +211,14 @@ async fn print_job_result(
     Ok(())
 }
 
+/// Resolve project ID from CLI flag, then config default.
+/// The `SSYNTH_PROJECT` env var is handled by clap before this is called.
+fn resolve_project_id<'a>(cli_project: Option<&'a str>, config: &'a Config) -> Result<&'a str> {
+    cli_project
+        .or(config.defaults.project_id.as_deref())
+        .context("--project is required (set via flag, SSYNTH_PROJECT env, or defaults.project_id in config)")
+}
+
 async fn resolve_target(
     args: &JobSubmitArgs,
     hwbuild: Option<&HwBuild>,
@@ -265,4 +269,47 @@ async fn resolve_target(
     }
 
     bail!("No target specified. Use --target ID or add target spec to hwbuild.yml.");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::DefaultsConfig;
+
+    #[test]
+    fn resolve_project_cli_flag_wins() {
+        let config = Config {
+            defaults: DefaultsConfig {
+                project_id: Some("config-project".to_string()),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let result = resolve_project_id(Some("cli-project"), &config);
+        assert_eq!(result.ok(), Some("cli-project"));
+    }
+
+    #[test]
+    fn resolve_project_falls_back_to_config() {
+        let config = Config {
+            defaults: DefaultsConfig {
+                project_id: Some("config-project".to_string()),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let result = resolve_project_id(None, &config);
+        assert_eq!(result.ok(), Some("config-project"));
+    }
+
+    #[test]
+    fn resolve_project_errors_when_unset() {
+        let config = Config::default();
+        let result = resolve_project_id(None, &config);
+        assert!(result.is_err());
+        let msg = result.err().map(|e| e.to_string()).unwrap_or_default();
+        assert!(msg.contains("--project is required"));
+        assert!(msg.contains("SSYNTH_PROJECT"));
+        assert!(msg.contains("defaults.project_id"));
+    }
 }
