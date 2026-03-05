@@ -95,8 +95,8 @@ pub struct JobSubmitArgs {
     /// Path to source directory or prepared bundle (.tar.gz / .zip)
     pub path: String,
 
-    /// Project ID
-    #[arg(long)]
+    /// Project ID (or set `SSYNTH_PROJECT` env var, or `defaults.project_id` in config)
+    #[arg(long, env = "SSYNTH_PROJECT")]
     pub project: Option<String>,
 
     /// Target ID (auto-detected from hwbuild.yml if not set)
@@ -138,6 +138,10 @@ pub struct JobSubmitArgs {
     /// Max memory (e.g., "16GB", "4096MB")
     #[arg(long)]
     pub max_memory: Option<String>,
+
+    /// Archive format: `tar_gz` (default) or `zip`
+    #[arg(long)]
+    pub archive_format: Option<String>,
 
     /// Wait for job to complete, streaming logs
     #[arg(long)]
@@ -257,10 +261,6 @@ pub struct ArtifactDownloadArgs {
     /// Output directory (default: current directory)
     #[arg(long)]
     pub output_dir: Option<String>,
-
-    /// Download a specific artifact by ID (default: download all)
-    #[arg(long)]
-    pub artifact_id: Option<String>,
 }
 
 // ── Project ──

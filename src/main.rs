@@ -100,7 +100,7 @@ async fn dispatch_job(
     match cmd {
         JobCommand::Submit(args) => {
             let tenant_id = require_tenant(config)?;
-            commands::job_submit::run(args, client, &tenant_id, mode).await?;
+            commands::job_submit::run(args, client, config, &tenant_id, mode).await?;
         }
         JobCommand::Status(args) => {
             commands::job_status::run(args, client, mode).await?;

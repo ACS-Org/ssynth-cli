@@ -8,6 +8,7 @@ use colored::Colorize;
 
 use crate::cli::JobSubmitArgs;
 use crate::client::{check_response, ApiClient};
+use crate::config::Config;
 use crate::error::CliError;
 use crate::hwbuild::HwBuild;
 use crate::ignore::build_ignore;
@@ -19,6 +20,7 @@ use crate::upload::{create_tarball, upload_source as do_upload};
 pub async fn run(
     args: &JobSubmitArgs,
     client: &ApiClient,
+    config: &Config,
     _tenant_id: &str,
     mode: OutputMode,
 ) -> Result<()> {
@@ -45,7 +47,8 @@ pub async fn run(
     let project_id = args
         .project
         .as_deref()
-        .context("--project is required (no default set)")?;
+        .or(config.defaults.project_id.as_deref())
+        .context("--project is required (set via flag, SSYNTH_PROJECT env, or defaults.project_id in config)")?;
 
     let source_key = upload_source(&path, client).await?;
     let req = build_job_request(args, hwbuild.as_ref(), target_id, top_module, source_key)?;
@@ -148,6 +151,7 @@ fn build_job_request(
         idempotency_key: args.idempotency_key.clone(),
         max_runtime_secs,
         max_memory_mb,
+        archive_format: args.archive_format.clone(),
     })
 }
 

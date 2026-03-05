@@ -88,7 +88,7 @@ async fn login_dev(args: &LoginArgs, config: &mut Config, api_url: &str) -> Resu
     config.save()?;
 
     println!("{}", "Dev login successful!".green().bold());
-    println!("  User:   {} ({})", login.user.github_login, login.user.id);
+    println!("  User:   {} ({})", login.user.username, login.user.id);
     println!("  Tenant: {}", login.user.tenant_id);
 
     Ok(())

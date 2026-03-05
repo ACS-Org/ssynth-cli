@@ -21,7 +21,7 @@ pub struct LoginResponse {
 #[derive(Debug, Deserialize)]
 pub struct UserInfo {
     pub id: Uuid,
-    pub github_login: String,
+    pub username: String,
     pub tenant_id: Uuid,
 }
 
@@ -107,6 +107,8 @@ pub struct CreateJobRequest {
     pub max_runtime_secs: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_memory_mb: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub archive_format: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -127,6 +129,11 @@ pub struct Job {
     pub idempotency_key: Option<String>,
     pub max_runtime_secs: Option<i32>,
     pub max_memory_mb: Option<i32>,
+    pub archive_format: String,
+    pub archive_s3_key: Option<String>,
+    pub archive_size_bytes: Option<i64>,
+    pub archive_sha256: Option<String>,
+    pub archive_filename: Option<String>,
     pub parent_job_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -151,6 +158,11 @@ pub struct JobDetailResponse {
     pub idempotency_key: Option<String>,
     pub max_runtime_secs: Option<i32>,
     pub max_memory_mb: Option<i32>,
+    pub archive_format: String,
+    pub archive_s3_key: Option<String>,
+    pub archive_size_bytes: Option<i64>,
+    pub archive_sha256: Option<String>,
+    pub archive_filename: Option<String>,
     pub parent_job_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
