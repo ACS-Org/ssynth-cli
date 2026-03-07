@@ -8,7 +8,7 @@ use crate::cli::{
     ProjectCreateArgs, ProjectDeleteArgs, ProjectGetArgs, ProjectListArgs, ProjectUpdateArgs,
 };
 use crate::client::{check_response, ApiClient};
-use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
+use crate::models::{CreateProjectRequest, PageResponse, Project, UpdateProjectRequest};
 use crate::output::{format_time, new_table, print_list, print_output, short_uuid, OutputMode};
 
 pub async fn list(
@@ -23,7 +23,8 @@ pub async fn list(
         .await
         .context("Failed to list projects")?;
     let resp = check_response(resp).await?;
-    let projects: Vec<Project> = resp.json().await.context("Failed to parse projects")?;
+    let page: PageResponse<Project> = resp.json().await.context("Failed to parse projects")?;
+    let projects = page.data;
 
     print_list(
         mode,

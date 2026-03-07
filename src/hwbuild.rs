@@ -11,6 +11,7 @@ use crate::error::CliError;
 /// Represents the `hwbuild.yml` project configuration file.
 #[derive(Debug, Deserialize)]
 pub struct HwBuild {
+    #[serde(alias = "top")]
     pub top_module: Option<String>,
     pub target: Option<TargetSpec>,
     pub constraints: Option<Vec<String>>,
