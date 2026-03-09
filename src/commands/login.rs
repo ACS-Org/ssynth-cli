@@ -7,7 +7,7 @@ use colored::Colorize;
 use crate::cli::LoginArgs;
 use crate::client::{check_response, ApiClient};
 use crate::config::{AuthConfig, AuthToken, Config};
-use crate::models::{DevLoginRequest, LoginResponse, Tenant};
+use crate::models::{DevLoginRequest, LoginResponse, PageResponse, Tenant};
 
 pub async fn run(args: &LoginArgs, config: &mut Config, api_url: &str) -> Result<()> {
     if args.dev {
@@ -36,7 +36,8 @@ async fn login_api_key(args: &LoginArgs, config: &mut Config, api_url: &str) -> 
         .await
         .context("Failed to connect to API")?;
     let resp = check_response(resp).await?;
-    let tenants: Vec<Tenant> = resp.json().await.context("Failed to parse tenants")?;
+    let page: PageResponse<Tenant> = resp.json().await.context("Failed to parse tenants")?;
+    let tenants = page.data;
 
     config.auth = AuthConfig {
         api_key: Some(key),
