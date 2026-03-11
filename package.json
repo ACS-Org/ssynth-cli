@@ -1,8 +1,13 @@
 {
   "name": "ssynth",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI for SuperSynth FPGA synthesis platform",
   "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ACS-Org/ssynth-cli.git"
+  },
+  "homepage": "https://supersynth.ai/",
   "type": "module",
   "bin": {
     "ssynth": "bin/ssynth.js"
