@@ -1,6 +1,6 @@
 {
   "name": "ssynth",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CLI for SuperSynth FPGA synthesis platform",
   "license": "GPL-3.0-only",
   "repository": {
